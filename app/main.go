@@ -1,31 +1,41 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/frisk038/swipe_dungeon/app/handlers"
+	"github.com/frisk038/swipe_dungeon/business/user"
+	"github.com/frisk038/swipe_dungeon/infra/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func initRoutes() {
+func initRoutes(um handlers.UserManager) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
 
 	r := gin.Default()
-	r.Use(cors.Default())
-	geo := r.Group("/", gin.BasicAuth(gin.Accounts{
+	r.Use(cors.Default(), gin.BasicAuth(gin.Accounts{
 		os.Getenv("USER"): os.Getenv("PASS"),
 	}))
 
-	geo.POST("/user", handlers.PostUser())
+	r.POST("/user", handlers.PostUser(um))
+	r.GET("/user/:player_id", handlers.GetUser(um))
+	r.PUT("/user", handlers.UpdateUserType(um))
 
 	r.Run(":" + port)
 }
 
 func main() {
-	initRoutes()
+	repo, err := store.New()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ub := user.New(repo)
+	initRoutes(ub)
 }
