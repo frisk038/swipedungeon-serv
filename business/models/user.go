@@ -1,8 +1,11 @@
 package models
 
+import "github.com/google/uuid"
+
 type User struct {
-	UserID    int64
+	UserID    uuid.UUID
 	Name      string
 	PlayerID  string
 	PowerType PowerType
+	CharaID   int64
 }
