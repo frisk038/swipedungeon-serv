@@ -1,6 +1,6 @@
 module github.com/frisk038/swipe_dungeon
 
-go 1.21.1
+go 1.21
 
 require (
 	github.com/gin-contrib/cors v1.5.0
