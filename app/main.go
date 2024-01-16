@@ -27,8 +27,8 @@ func initRoutes(um handlers.UserManager) {
 	r.GET("/user/:player_id", handlers.GetUser(um))
 	r.PUT("/user", handlers.UpdateUserInfo(um))
 
-	r.POST("/geo", handlers.POSTUserCoordinates(um))
-	r.GET("/geo", handlers.GetNearbyUser(um))
+	r.POST("/geo/user", handlers.POSTUserCoordinates(um))
+	r.POST("/geo/near", handlers.GetNearbyUser(um))
 
 	r.Run(":" + port)
 }

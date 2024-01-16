@@ -26,11 +26,13 @@ const (
 	selectUserID       = "SELECT user_id from users WHERE player_id=$1;"
 	updateUserType     = "UPDATE users SET power_type=$1, chara_id=$2 WHERE user_id=$3;"
 	insertUserLocation = "INSERT INTO userlocation(user_id, coord) values($1, ST_MakePoint($2, $3));"
-	selectNearbyUser   = `SELECT name, power_type, chara_id
-	                      FROM userlocation
-						  LEFT JOIN users ON users.user_id = userlocation.user_id
-						  WHERE ST_DWithin(coord, ST_MakePoint($1, $2)::geography, $3)
-						  LIMIT $4;`
+	selectNearbyUser   = `SELECT DISTINCT ON (name) name, power_type, chara_id
+							FROM userlocation
+							LEFT JOIN users ON users.user_id = userlocation.user_id
+							WHERE ST_DWithin(coord, ST_MakePoint($1, $2)::geography, $3)
+							AND users.user_id != $4 
+							ORDER BY name, created_at
+							LIMIT $5;`
 	MaxNearbyUserLimit    = 5
 	MaxNearbyUserDistance = 10000
 )
@@ -74,7 +76,8 @@ func (c *Client) InsertUserLocation(ctx context.Context, user_id uuid.UUID, coor
 }
 
 func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error) {
-	rows, err := c.conn.Query(ctx, selectNearbyUser, coord.Latitude, coord.Longitude, MaxNearbyUserDistance, MaxNearbyUserLimit)
+	rows, err := c.conn.Query(ctx, selectNearbyUser,
+		coord.Latitude, coord.Longitude, MaxNearbyUserDistance, user_id, MaxNearbyUserLimit)
 	if err != nil {
 		return nil, err
 	}
