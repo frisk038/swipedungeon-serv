@@ -3,8 +3,8 @@ DROP TABLE users;
 
 CREATE TABLE users (
     user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    name text NOT NULL,
-    player_id text UNIQUE NOT NULL,
+    name text UNIQUE NOT NULL,
+    player_id text NOT NULL,
     power_type text,
     chara_id int
 );
