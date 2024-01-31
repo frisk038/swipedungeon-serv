@@ -23,7 +23,7 @@ const (
 		            RETURNING user_id
 	            ) SELECT * FROM e 
 				UNION SELECT user_id FROM users WHERE name=$1;`
-	selectUserID       = "SELECT user_id from users WHERE player_id=$1;"
+	selectUserID       = "SELECT user_id from users WHERE name=$1;"
 	updateUserType     = "UPDATE users SET power_type=$1, chara_id=$2 WHERE user_id=$3;"
 	insertUserLocation = "INSERT INTO userlocation(user_id, coord) values($1, ST_MakePoint($2, $3));"
 	selectNearbyUser   = `SELECT DISTINCT ON (name) name, power_type, chara_id

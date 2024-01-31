@@ -5,6 +5,7 @@ import (
 
 	"github.com/frisk038/swipe_dungeon/business/models"
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 )
 
 type store interface {
@@ -36,9 +37,17 @@ func (ub *UserBusiness) UpdateUserInfo(ctx context.Context, user models.User) er
 	return ub.store.UpdateUserInfo(ctx, user)
 }
 
-func (ub *UserBusiness) GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error) {
+func (ub *UserBusiness) GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) (users []models.User, err error) {
 	// todo valide type
-	return ub.store.SelectNearbyUser(ctx, user_id, coord)
+	var errGrp errgroup.Group
+	errGrp.Go(func() error {
+		return ub.store.InsertUserLocation(ctx, user_id, coord)
+	})
+	errGrp.Go(func() error {
+		users, err = ub.store.SelectNearbyUser(ctx, user_id, coord)
+		return err
+	})
+	return users, errGrp.Wait()
 }
 
 func (ub *UserBusiness) StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error {
