@@ -18,9 +18,9 @@ type UserManager interface {
 }
 
 type nearByResp struct {
-	Name      string `json:"name,omitempty"`
-	PowerType string `json:"power_type,omitempty"`
-	CharaID   int64  `json:"char_id,omitempty"`
+	Name      string `json:"name"`
+	PowerType string `json:"power_type"`
+	CharaID   int64  `json:"char_id"`
 }
 
 func PostUser(um UserManager) gin.HandlerFunc {

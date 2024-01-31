@@ -81,7 +81,7 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 	if err != nil {
 		return nil, err
 	}
-	users := make([]models.User, MaxNearbyUserLimit)
+	users := make([]models.User, 0)
 	var (
 		user        models.User
 		ptype       *string
@@ -104,6 +104,5 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 		}
 		users = append(users, user)
 	}
-
 	return users, rows.Err()
 }
