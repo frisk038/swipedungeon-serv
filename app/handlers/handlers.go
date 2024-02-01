@@ -29,7 +29,7 @@ func PostUser(um UserManager) gin.HandlerFunc {
 			Name      string `json:"name" binding:"required"`
 			PlayerID  string `json:"player_id" binding:"required"`
 			CharaID   int64  `json:"chara_id"`
-			PowerType string `json:"power_type"`
+			PowerType string `json:"power_type" binding:"required"`
 		}{}
 		err := c.ShouldBindJSON(&user)
 		if err != nil {
@@ -70,7 +70,7 @@ func UpdateUserInfo(um UserManager) gin.HandlerFunc {
 		var user = struct {
 			UserID    uuid.UUID `json:"user_id" binding:"required"`
 			PowerType string    `json:"power_type" binding:"required"`
-			CharaID   int64     `json:"chara_id" binding:"required"`
+			CharaID   int64     `json:"chara_id"`
 		}{}
 		err := c.ShouldBindJSON(&user)
 		if err != nil {
