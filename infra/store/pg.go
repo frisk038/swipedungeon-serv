@@ -117,7 +117,7 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 }
 
 func (c *Client) InsertUserScore(ctx context.Context, userID uuid.UUID, score models.Score) error {
-	if _, err := c.conn.Exec(ctx, insertUserScore, score.Floor, score.Level, userID); err != nil {
+	if _, err := c.conn.Exec(ctx, insertUserScore, userID, score.Floor, score.Level); err != nil {
 		return err
 	}
 	return nil
