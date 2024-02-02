@@ -15,6 +15,7 @@ type UserManager interface {
 	UpdateUserInfo(ctx context.Context, user models.User) error
 	GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error)
 	StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error
+	StoreUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error
 }
 
 type nearByResp struct {
@@ -147,6 +148,37 @@ func POSTUserCoordinates(um UserManager) gin.HandlerFunc {
 			Latitude:  req.Coord.Latitude,
 		})
 		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.Status(http.StatusOK)
+	}
+}
+
+func POSTUserScore(um UserManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req = struct {
+			Floor int `json:"floor" binding:"required"`
+			Level int `json:"level" binding:"required"`
+		}{}
+
+		if err := c.ShouldBindJSON(req); err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		userIDstr := c.Param("user_id")
+		userID, err := uuid.Parse(userIDstr)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		if err = um.StoreUserScore(c.Request.Context(), userID, models.Score{
+			Level: req.Level,
+			Floor: req.Floor,
+		}); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}

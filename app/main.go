@@ -30,6 +30,8 @@ func initRoutes(um handlers.UserManager) {
 	r.POST("/geo/user", handlers.POSTUserCoordinates(um))
 	r.POST("/geo/near", handlers.GetNearbyUser(um))
 
+	r.POST("/score/:user_id", handlers.POSTUserScore(um))
+
 	r.Run(":" + port)
 }
 

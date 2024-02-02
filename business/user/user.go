@@ -14,6 +14,7 @@ type store interface {
 	UpdateUserInfo(ctx context.Context, user models.User) error
 	SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error)
 	InsertUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error
+	InsertUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error
 }
 
 type UserBusiness struct {
@@ -53,4 +54,8 @@ func (ub *UserBusiness) GetNearbyUser(ctx context.Context, user_id uuid.UUID, co
 func (ub *UserBusiness) StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error {
 	// todo valide type
 	return ub.store.InsertUserLocation(ctx, user_id, coord)
+}
+
+func (ub *UserBusiness) StoreUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error {
+	return ub.store.InsertUserScore(ctx, user_id, score)
 }

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/frisk038/swipe_dungeon/business/models"
@@ -33,6 +32,12 @@ const (
 							AND users.user_id != $4 
 							ORDER BY name, created_at
 							LIMIT $5;`
+	insertUserScore = `INSERT INTO userscore (user_id, score, user_level)
+							VALUES ($1, $2, $3)
+							ON CONFLICT (user_id) DO UPDATE
+							SET score = GREATEST(EXCLUDED.score, userscore.score),
+							user_level = EXCLUDED.user_level;`
+
 	MaxNearbyUserLimit    = 5
 	MaxNearbyUserDistance = 10000
 )
@@ -69,8 +74,6 @@ func (c *Client) UpdateUserInfo(ctx context.Context, user models.User) error {
 }
 
 func (c *Client) InsertUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error {
-	fmt.Println(user_id, coord)
-
 	_, err := c.conn.Exec(ctx, insertUserLocation, user_id, coord.Latitude, coord.Longitude)
 	return err
 }
@@ -105,4 +108,11 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 		users = append(users, user)
 	}
 	return users, rows.Err()
+}
+
+func (c *Client) InsertUserScore(ctx context.Context, userID uuid.UUID, score models.Score) error {
+	if _, err := c.conn.Exec(ctx, insertUserScore, userID, score.Floor, score.Level); err != nil {
+		return err
+	}
+	return nil
 }
