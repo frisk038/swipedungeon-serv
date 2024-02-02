@@ -15,6 +15,7 @@ type store interface {
 	SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error)
 	InsertUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error
 	InsertUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error
+	GetLeaderboard(ctx context.Context) (models.LeaderBoard, error)
 }
 
 type UserBusiness struct {
@@ -58,4 +59,8 @@ func (ub *UserBusiness) StoreUserLocation(ctx context.Context, user_id uuid.UUID
 
 func (ub *UserBusiness) StoreUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error {
 	return ub.store.InsertUserScore(ctx, user_id, score)
+}
+
+func (ub *UserBusiness) GetLeaderboard(ctx context.Context) (models.LeaderBoard, error) {
+	return ub.store.GetLeaderboard(ctx)
 }

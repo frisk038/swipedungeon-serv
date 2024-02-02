@@ -16,6 +16,7 @@ type UserManager interface {
 	GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error)
 	StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error
 	StoreUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error
+	GetLeaderboard(ctx context.Context) (models.LeaderBoard, error)
 }
 
 type nearByResp struct {
@@ -184,5 +185,24 @@ func POSTUserScore(um UserManager) gin.HandlerFunc {
 		}
 
 		c.Status(http.StatusOK)
+	}
+}
+
+func GETLeaderboard(um UserManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		lb, err := um.GetLeaderboard(c.Request.Context())
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		resp := struct {
+			UserName string `json:"username"`
+			Floor    int    `json:"floor"`
+		}{
+			UserName: lb.UserName,
+			Floor:    lb.Score,
+		}
+		c.JSON(http.StatusOK, resp)
 	}
 }

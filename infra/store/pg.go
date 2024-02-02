@@ -32,14 +32,17 @@ const (
 							AND users.user_id != $4 
 							ORDER BY name, created_at
 							LIMIT $5;`
-	insertUserScore = `UPDATE userscore
-						SET (score, user_level) = 
-							(SELECT 
-								CASE WHEN $1 > score THEN $1 ELSE score END,
-								CASE WHEN $1 > score THEN $2 ELSE user_level END
-		 						FROM userscore
-		 						WHERE user_id = $3)
-						WHERE user_id = $3;`
+	insertUserScore = `INSERT INTO userscore (user_id, score, user_level)
+						VALUES ($1, $2, $3)
+						ON CONFLICT (user_id) DO UPDATE
+						SET score = GREATEST(EXCLUDED.score, userscore.score),
+							user_level = CASE WHEN EXCLUDED.score > userscore.score 
+							THEN EXCLUDED.user_level 
+							ELSE userscore.user_level END;`
+	topPlayer = `SELECT users.name, userscore.score 
+					FROM userscore LEFT JOIN users 
+					ON userscore.user_id=users.user_id 
+					ORDER BY score DESC LIMIT 1`
 
 	MaxNearbyUserLimit    = 5
 	MaxNearbyUserDistance = 10000
@@ -118,4 +121,14 @@ func (c *Client) InsertUserScore(ctx context.Context, userID uuid.UUID, score mo
 		return err
 	}
 	return nil
+}
+
+func (c *Client) GetLeaderboard(ctx context.Context) (models.LeaderBoard, error) {
+	row := c.conn.QueryRow(ctx, topPlayer)
+	var lb models.LeaderBoard
+
+	if err := row.Scan(&lb.UserName, &lb.Score); err != nil {
+		return models.LeaderBoard{}, err
+	}
+	return lb, nil
 }

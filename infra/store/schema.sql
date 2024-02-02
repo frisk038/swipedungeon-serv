@@ -24,11 +24,9 @@ CREATE TABLE userscore (
     PRIMARY KEY(user_id)
 );
 
-UPDATE userscore
-	SET (score, user_level) = 
-		(SELECT 
-			CASE WHEN $1 > score THEN $1 ELSE score END,
-			CASE WHEN $1 > score THEN $2 ELSE user_level END
-		 	FROM userscore
-			WHERE user_id = '5d28f627-b30c-4171-939f-cc577ced454')
-		WHERE user_id = '5d28f627-b30c-4171-939f-cc577ced454';
+INSERT INTO userscore (user_id, score, user_level)
+VALUES ('d84bbea4-4cb3-4539-b5f4-d04c0067c61e', 9, 1)
+ON CONFLICT (user_id) 
+DO UPDATE
+SET score = GREATEST(EXCLUDED.score, userscore.score),
+user_level = CASE WHEN EXCLUDED.score > userscore.score THEN EXCLUDED.user_level ELSE userscore.user_level END;
