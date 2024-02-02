@@ -32,11 +32,14 @@ const (
 							AND users.user_id != $4 
 							ORDER BY name, created_at
 							LIMIT $5;`
-	insertUserScore = `INSERT INTO userscore (user_id, score, user_level)
-							VALUES ($1, $2, $3)
-							ON CONFLICT (user_id) DO UPDATE
-							SET score = GREATEST(EXCLUDED.score, userscore.score),
-							user_level = EXCLUDED.user_level;`
+	insertUserScore = `UPDATE userscore
+						SET (score, user_level) = 
+							(SELECT 
+								CASE WHEN $1 > score THEN $1 ELSE score END,
+								CASE WHEN $1 > score THEN $2 ELSE user_level END
+		 						FROM userscore
+		 						WHERE user_id = $3)
+						WHERE user_id = $3;`
 
 	MaxNearbyUserLimit    = 5
 	MaxNearbyUserDistance = 10000
@@ -111,7 +114,7 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 }
 
 func (c *Client) InsertUserScore(ctx context.Context, userID uuid.UUID, score models.Score) error {
-	if _, err := c.conn.Exec(ctx, insertUserScore, userID, score.Floor, score.Level); err != nil {
+	if _, err := c.conn.Exec(ctx, insertUserScore, score.Floor, score.Level, userID); err != nil {
 		return err
 	}
 	return nil

@@ -163,7 +163,7 @@ func POSTUserScore(um UserManager) gin.HandlerFunc {
 			Level int `json:"level" binding:"required"`
 		}{}
 
-		if err := c.ShouldBindJSON(req); err != nil {
+		if err := c.ShouldBindJSON(&req); err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
