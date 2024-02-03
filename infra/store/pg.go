@@ -48,8 +48,8 @@ const (
 					ORDER BY score DESC LIMIT 1`
 	insertSeenUser = "INSERT INTO seen(user_id, seen_user) values($1, $2);"
 
-	MaxNearbyUserLimit    = 20
-	MaxNearbyUserDistance = 1000
+	MaxNearbyUserLimit    = 5
+	MaxNearbyUserDistance = 10000
 )
 
 func New() (*Client, error) {
