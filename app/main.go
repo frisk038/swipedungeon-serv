@@ -7,6 +7,7 @@ import (
 
 	"github.com/frisk038/swipe_dungeon/app/handlers"
 	"github.com/frisk038/swipe_dungeon/business/user"
+	"github.com/frisk038/swipe_dungeon/infra/adapter/maps"
 	"github.com/frisk038/swipe_dungeon/infra/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -42,6 +43,8 @@ func main() {
 		fmt.Println(err)
 	}
 
-	ub := user.New(repo)
+	mp := maps.New()
+
+	ub := user.New(repo, mp)
 	initRoutes(ub)
 }

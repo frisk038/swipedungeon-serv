@@ -2,11 +2,13 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/frisk038/swipe_dungeon/business/models"
 	"github.com/google/uuid"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -24,11 +26,12 @@ const (
 				UNION SELECT user_id FROM users WHERE name=$1;`
 	selectUserID       = "SELECT user_id from users WHERE name=$1;"
 	updateUserType     = "UPDATE users SET power_type=$1, chara_id=$2 WHERE user_id=$3;"
-	insertUserLocation = "INSERT INTO userlocation(user_id, coord) values($1, ST_MakePoint($2, $3));"
-	selectNearbyUser   = `SELECT DISTINCT ON (name) name, power_type, chara_id
+	insertUserLocation = "INSERT INTO userlocation(user_id, coord, city) values($1, ST_MakePoint($2, $3), $4);"
+	selectNearbyUser   = `SELECT DISTINCT ON (name) name, power_type, chara_id, city, users.user_id
 							FROM userlocation
 							LEFT JOIN users ON users.user_id = userlocation.user_id
 							WHERE ST_DWithin(coord, ST_MakePoint($1, $2)::geography, $3)
+							AND users.user_id NOT IN (SELECT seen_user FROM seen WHERE user_id = $4)
 							AND users.user_id != $4 
 							ORDER BY name, created_at
 							LIMIT $5;`
@@ -43,9 +46,10 @@ const (
 					FROM userscore LEFT JOIN users 
 					ON userscore.user_id=users.user_id 
 					ORDER BY score DESC LIMIT 1`
+	insertSeenUser = "INSERT INTO seen(user_id, seen_user) values($1, $2);"
 
-	MaxNearbyUserLimit    = 5
-	MaxNearbyUserDistance = 10000
+	MaxNearbyUserLimit    = 20
+	MaxNearbyUserDistance = 1000
 )
 
 func New() (*Client, error) {
@@ -79,12 +83,12 @@ func (c *Client) UpdateUserInfo(ctx context.Context, user models.User) error {
 	return err
 }
 
-func (c *Client) InsertUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error {
-	_, err := c.conn.Exec(ctx, insertUserLocation, user_id, coord.Latitude, coord.Longitude)
+func (c *Client) InsertUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Location) error {
+	_, err := c.conn.Exec(ctx, insertUserLocation, user_id, coord.Latitude, coord.Longitude, coord.City)
 	return err
 }
 
-func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error) {
+func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Location) ([]models.User, error) {
 	rows, err := c.conn.Query(ctx, selectNearbyUser,
 		coord.Latitude, coord.Longitude, MaxNearbyUserDistance, user_id, MaxNearbyUserLimit)
 	if err != nil {
@@ -99,7 +103,7 @@ func (c *Client) SelectNearbyUser(ctx context.Context, user_id uuid.UUID, coord 
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&user.Name, &ptype, &charaID)
+		err = rows.Scan(&user.Name, &ptype, &charaID, &user.Loc.City, &user.UserID)
 		if err != nil {
 			return nil, err
 		}
@@ -131,4 +135,22 @@ func (c *Client) GetLeaderboard(ctx context.Context) (models.LeaderBoard, error)
 		return models.LeaderBoard{}, err
 	}
 	return lb, nil
+}
+
+func (c *Client) InsertSeenUser(ctx context.Context, userID uuid.UUID, seen []models.User) error {
+
+	rows := [][]any{}
+	for _, s := range seen {
+		rows = append(rows, []any{userID, s.UserID})
+	}
+
+	fmt.Println(rows)
+
+	_, err := c.conn.CopyFrom(
+		ctx,
+		pgx.Identifier{"seen"},
+		[]string{"user_id", "seen_user"},
+		pgx.CopyFromRows(rows))
+
+	return err
 }

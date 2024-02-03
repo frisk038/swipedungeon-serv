@@ -1,6 +1,7 @@
 package models
 
-type Coordinate struct {
+type Location struct {
 	Longitude string
 	Latitude  string
+	City      string
 }

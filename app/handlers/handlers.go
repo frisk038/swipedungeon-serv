@@ -13,8 +13,8 @@ type UserManager interface {
 	StoreUser(ctx context.Context, user models.User) (uuid.UUID, error)
 	GetUserID(ctx context.Context, playerID string) (uuid.UUID, error)
 	UpdateUserInfo(ctx context.Context, user models.User) error
-	GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) ([]models.User, error)
-	StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Coordinate) error
+	GetNearbyUser(ctx context.Context, user_id uuid.UUID, coord models.Location) ([]models.User, error)
+	StoreUserLocation(ctx context.Context, user_id uuid.UUID, coord models.Location) error
 	StoreUserScore(ctx context.Context, user_id uuid.UUID, score models.Score) error
 	GetLeaderboard(ctx context.Context) (models.LeaderBoard, error)
 }
@@ -23,6 +23,7 @@ type nearByResp struct {
 	Name      string `json:"name"`
 	PowerType string `json:"power_type"`
 	CharaID   int64  `json:"char_id"`
+	City      string `json:"city"`
 }
 
 func PostUser(um UserManager) gin.HandlerFunc {
@@ -108,7 +109,7 @@ func GetNearbyUser(um UserManager) gin.HandlerFunc {
 			return
 		}
 
-		users, err := um.GetNearbyUser(c.Request.Context(), req.UserID, models.Coordinate{
+		users, err := um.GetNearbyUser(c.Request.Context(), req.UserID, models.Location{
 			Longitude: req.Coord.Longitude,
 			Latitude:  req.Coord.Latitude,
 		})
@@ -123,6 +124,7 @@ func GetNearbyUser(um UserManager) gin.HandlerFunc {
 				Name:      u.Name,
 				PowerType: string(u.PowerType),
 				CharaID:   u.CharaID,
+				City:      u.Loc.City,
 			})
 		}
 		c.JSON(http.StatusOK, gin.H{"users": userResp})
@@ -144,7 +146,7 @@ func POSTUserCoordinates(um UserManager) gin.HandlerFunc {
 			return
 		}
 
-		err := um.StoreUserLocation(c.Request.Context(), req.UserID, models.Coordinate{
+		err := um.StoreUserLocation(c.Request.Context(), req.UserID, models.Location{
 			Longitude: req.Coord.Longitude,
 			Latitude:  req.Coord.Latitude,
 		})

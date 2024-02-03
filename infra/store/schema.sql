@@ -24,9 +24,11 @@ CREATE TABLE userscore (
     PRIMARY KEY(user_id)
 );
 
-INSERT INTO userscore (user_id, score, user_level)
-VALUES ('d84bbea4-4cb3-4539-b5f4-d04c0067c61e', 9, 1)
-ON CONFLICT (user_id) 
-DO UPDATE
-SET score = GREATEST(EXCLUDED.score, userscore.score),
-user_level = CASE WHEN EXCLUDED.score > userscore.score THEN EXCLUDED.user_level ELSE userscore.user_level END;
+ALTER TABLE userlocation ADD city text DEFAULT ''; 
+
+CREATE TABLE seen (
+    user_id uuid REFERENCES users(user_id),
+    seen_user uuid REFERENCES users(user_id),
+    seen_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, seen_user)
+);

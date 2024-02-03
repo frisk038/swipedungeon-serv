@@ -8,4 +8,5 @@ type User struct {
 	PlayerID  string
 	PowerType PowerType
 	CharaID   int64
+	Loc       Location
 }
